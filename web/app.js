@@ -32,11 +32,6 @@ const sampleSizeSelect = document.getElementById('sample-size-select');
 const csvInput = document.getElementById('csv-input');
 const dgmEquationEl = document.getElementById('dgm-equation');
 
-const ciTestSelect = document.getElementById('ci-test-select');
-const effectSizeSelect = document.getElementById('effect-size-select');
-const significanceSelect = document.getElementById('significance-level-select');
-const csvInput = document.getElementById('csv-input');
-
 
 const DEFAULT_CSV = "results/default_ci_benchmark_summaries.csv"; 
 
@@ -60,16 +55,8 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 csvInput.addEventListener('change', handleCSVUpload);
-
 dgmSelect.addEventListener('change', refreshControls);
 sampleSizeSelect.addEventListener('change', renderCharts);
-
-
-dgmSelect.addEventListener('change', refreshControls);
-ciTestSelect.addEventListener('change', refreshControls);
-effectSizeSelect.addEventListener('change', refreshControls);
-significanceSelect.addEventListener('change', refreshControls);
-
 
 function handleCSVUpload(event) {
     const file = event.target.files[0];
@@ -103,7 +90,6 @@ function parseValue(v) {
 function buildDGMMap(data) {
     dgmMap = {};
     data.forEach(row => {
-
         const { dgm, sample_size } = row;
         if (!dgmMap[dgm]) dgmMap[dgm] = new Set();
         dgmMap[dgm].add(row.sample_size);
@@ -111,28 +97,18 @@ function buildDGMMap(data) {
     // Convert sets to arrays
     Object.keys(dgmMap).forEach(dgm => {
         dgmMap[dgm] = Array.from(dgmMap[dgm]).sort((a, b) => a - b);
-
-        const { dgm, ci_test, effect_size, significance_level } = row;
-        if (!dgmMap[dgm]) dgmMap[dgm] = {};
-        if (!dgmMap[dgm][ci_test]) dgmMap[dgm][ci_test] = {};
-        if (!dgmMap[dgm][ci_test][effect_size]) dgmMap[dgm][ci_test][effect_size] = {};
-        dgmMap[dgm][ci_test][effect_size][significance_level] = true;
-
     });
 }
 
 function populateDropdowns() {
 
     setSelectOptions(dgmSelect, Object.keys(dgmMap).map(d => ({ value: d, label: DGM_META[d]?.name || d })));
-
     setSelectOptions(dgmSelect, Object.keys(dgmMap));
-
     onDGMChange();
 }
 
 function onDGMChange() {
     const dgm = dgmSelect.value;
-
     const sizes = dgm ? dgmMap[dgm] : [];
     setSelectOptions(sampleSizeSelect, sizes.map(s => ({ value: s, label: s })));
     updateDGMEquation();
@@ -151,64 +127,9 @@ function setSelectOptions(select, list) {
         const option = document.createElement('option');
         option.value = obj.value;
         option.textContent = obj.label;
-    const tests = dgm ? Object.keys(dgmMap[dgm]) : [];
-    setSelectOptions(ciTestSelect, tests);
-    onCITestChange();
-}
-function onCITestChange() {
-    const dgm = dgmSelect.value, test = ciTestSelect.value;
-    const effects = dgm && test ? Object.keys(dgmMap[dgm][test]) : [];
-    setSelectOptions(effectSizeSelect, effects);
-    onEffectSizeChange();
-}
-function onEffectSizeChange() {
-    const dgm = dgmSelect.value, test = ciTestSelect.value, effect = effectSizeSelect.value;
-    const sigs = dgm && test && effect ? Object.keys(dgmMap[dgm][test][effect]) : [];
-    setSelectOptions(significanceSelect, sigs);
-}
-
-dgmSelect.addEventListener('change', onDGMChange);
-ciTestSelect.addEventListener('change', onCITestChange);
-effectSizeSelect.addEventListener('change', onEffectSizeChange);
-
-function setSelectOptions(select, list) {
-    select.innerHTML = '';
-    for (const v of list) {
-        const option = document.createElement('option');
-        option.value = v;
-        option.textContent = v;
         select.appendChild(option);
     }
 }
-
-
-function renderCharts() {
-    if (!allData.length) return;
-    const dgm = dgmSelect.value;
-    const sampleSize = parseFloat(sampleSizeSelect.value);
-
-    // --- Calibration Plot: Type I error vs significance level ---
-    const calibData = allData.filter(row => 
-        row.dgm === dgm &&
-        row.sample_size === sampleSize &&
-        row.effect_size === 0
-    );
-    const ciTests = Array.from(new Set(calibData.map(r => r.ci_test)));
-
-    const calibDatasets = ciTests.map((ciTest, idx) => {
-        const rows = calibData.filter(r => r.ci_test === ciTest);
-        rows.sort((a, b) => a.significance_level - b.significance_level);
-        return {
-            label: ciTest,
-            data: rows.map(r => ({ x: r.significance_level, y: r.type1_error })),
-            borderColor: chartColor(idx, 1),
-            backgroundColor: chartColor(idx, 0.2),
-            pointRadius: 3,
-            fill: false
-        };
-    });
-
-
 function refreshControls() {
     renderCharts();
 }
@@ -239,7 +160,6 @@ function renderCharts() {
     const powers = powerData.map(r => r.power);
 
     // Rendering Calibration Plot 
-
     if (chartCalibration) chartCalibration.destroy();
     chartCalibration = new Chart(document.getElementById('calibration-plot').getContext('2d'), {
         type: 'line',
@@ -266,12 +186,7 @@ function renderCharts() {
             },
             scales: {
                 x: { title: { display: true, text: 'Significance Level' }, min: 0, max: 1 },
-
-                legend: { display: false }
-            },
-            scales: {
-                x: { title: { display: true, text: 'Significance Level' } },
-   y: { title: { display: true, text: 'Type I Error' }, min: 0, max: 1 }
+                y: { title: { display: true, text: 'Type I Error' }, min: 0, max: 1 }
             }
         }
     });
@@ -300,7 +215,6 @@ function renderCharts() {
 
 
     //  Rendering Power Plot 
-
     if (chartPower) chartPower.destroy();
     chartPower = new Chart(document.getElementById('power-plot').getContext('2d'), {
         type: 'line',
@@ -323,20 +237,15 @@ function renderCharts() {
             plugins: {
 
                 legend: { display: true }
+
             },
             scales: {
                 x: { title: { display: true, text: 'Effect Size' }, min: 0, max: 1 },
-
-                legend: { display: false }
-            },
-            scales: {
-                x: { title: { display: true, text: 'Sample Size' } },
 
                 y: { title: { display: true, text: 'Power' }, min: 0, max: 1 }
             }
         }
     });
-
 }
 
 function showStatus(msg, status) {
@@ -354,5 +263,4 @@ function chartColor(idx, alpha = 1) {
         `rgba(255, 87, 34, ${alpha})`,    // deep orange
     ];
     return colors[idx % colors.length];
-
 }
