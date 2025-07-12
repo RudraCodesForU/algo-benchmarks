@@ -149,23 +149,13 @@ function renderCharts() {
     const calibSLs = calibData.map(r => r.significance_level);
     const calibT1 = calibData.map(r => r.type1_error);
 
-    // Power Plot (Power vs Sample Size, user-selected effect size & significance level)
-    const powerData = allData.filter(row =>
-        row.dgm === dgm &&
-        row.ci_test === test &&
-        row.effect_size === effect &&
-        row.significance_level === significance
-    );
-    const sampleSizes = powerData.map(r => r.sample_size);
-    const powers = powerData.map(r => r.power);
-
     // Rendering Calibration Plot 
     if (chartCalibration) chartCalibration.destroy();
     chartCalibration = new Chart(document.getElementById('calibration-plot').getContext('2d'), {
         type: 'line',
         data: {
 
-            datasets: calibDatasets
+            datasets: calibDatasets , 
 
             labels: calibSLs,
             datasets: [{
@@ -220,7 +210,7 @@ function renderCharts() {
         type: 'line',
         data: {
 
-            datasets: powerDatasets
+            datasets: powerDatasets , 
             labels: sampleSizes,
             datasets: [{
                 label: 'Power',
